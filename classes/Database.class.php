@@ -112,5 +112,8 @@ class Database {
         return $w;
     }
 
+    public function __destruct() {
+        self::$link->close();
+    }
 
 }
