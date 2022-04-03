@@ -113,6 +113,20 @@ class PDODbHelper {
     }
 
     /**
+     *
+     * This function deletes a record from the database
+     *
+     * in order to work with this function you should provide a table's name and an associative array
+     *
+     * The first associative array $whereParams should contain the database column's names
+     * and what should they equal, for example:
+     *
+     * if you want this expression " ... WHERE id = 2 AND title = "example"
+     * the array then should be like the following :
+     *
+     * $whereParams = ["id" => 2, "title" => "example"]
+     *
+     *
      * @param string $table
      * @param array $whereParams
      * @return boolean
@@ -133,6 +147,9 @@ class PDODbHelper {
     }
 
     /**
+     *
+     * Merges two associative arrays, keeping the duplicate keys (Adding `_1` at its end)
+     *
      * @param $array1
      * @param $array2
      * @return array
