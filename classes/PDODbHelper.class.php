@@ -166,7 +166,7 @@ class PDODbHelper {
     }
 
     public function __destruct() {
-
+        self::$link = null;
     }
 
 }
