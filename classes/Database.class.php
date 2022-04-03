@@ -28,7 +28,7 @@ class Database {
 
         $w = self::_get_where_str($where);
 
-        $sql = "SELECT * FROM {$table} WHERE 1=1 {$w}" ;
+        $sql = "SELECT * FROM {$table} WHERE 1=1 {$w}";
 
         $result = self::$link->query($sql);
 
@@ -65,9 +65,7 @@ class Database {
 
         $sql = "INSERT INTO {$table} ($columns) VALUES ($values)";
 
-        $result = self::$link->query($sql);
-
-        return $result;
+        return self::$link->query($sql);
 
     }
 
@@ -86,16 +84,14 @@ class Database {
         foreach ($parameters as $key => $value) {
             $key = self::$link->real_escape_string($key);
             $value = self::$link->real_escape_string($value);
-            $p .= "{$key}={$value}, ";
+            $p .= "{$key}='{$value}', ";
         }
 
         $p = rtrim($p, ", ");
 
         $sql = "UPDATE {$table} SET {$p} WHERE 1=1 {$w}";
-        $result = self::$link->query($sql);
-        self::$link->close();
 
-        return $result;
+        return self::$link->query($sql);
     }
 
     /**
@@ -107,7 +103,7 @@ class Database {
         foreach ($where as $key => $value) {
             $key = self::$link->real_escape_string($key);
             $value = self::$link->real_escape_string($value);
-            $w .= " and {$key} = '{$value}'";
+            $w .= " AND {$key} = '{$value}'";
         }
         return $w;
     }
@@ -117,3 +113,6 @@ class Database {
     }
 
 }
+
+
+
