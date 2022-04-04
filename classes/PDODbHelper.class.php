@@ -3,7 +3,7 @@
 require_once "config/config.php";
 
 class PDODbHelper {
-    gi
+
     private static $HOST = "localhost";
     private static $DATABASE = "ANDROID_NOTIFY_DB";
     private static $USER = "mohabouz";
@@ -14,14 +14,34 @@ class PDODbHelper {
      */
     private static $link;
 
+    /**
+     * @var array|false
+     */
+    private $tables;
+
     public function __construct() {
         $dsn = sprintf("mysql:dbname=%s;host=%s", self::$DATABASE, self::$HOST);
 
         try {
             self::$link = new PDO($dsn, self::$USER, self::$PASSWORD);
+            $this->tables = $this->listTables();
         } catch (PDOException $e) {
             die($e->getMessage());
         }
+    }
+
+    public function listTables() {
+        $tableList = array();
+        $result = self::$link->query("SHOW TABLES");
+        if (!$result) return false;
+        while ($row = $result->fetch(PDO::FETCH_NUM)) {
+            $tableList[] = $row[0];
+        }
+        return $tableList;
+    }
+
+    private function checkTableExists($tableName) {
+        return in_array($tableName, $this->tables);
     }
 
     /**
@@ -30,6 +50,10 @@ class PDODbHelper {
      * @return bool
      */
     public function insert($table, $parameters) {
+
+        if (!$this->checkTableExists($table)) {
+            return false;
+        }
 
         $columns = "";
         $values = "";
@@ -58,6 +82,10 @@ class PDODbHelper {
      * @noinspection SqlConstantCondition
      */
     public function select($table, $columns, $whereParams = []) {
+
+        if (!$this->checkTableExists($table)) {
+            return false;
+        }
 
         $col_str = count($columns) > 0 ? implode(", ", $columns) : "*";
 
@@ -92,6 +120,11 @@ class PDODbHelper {
      * @noinspection SqlConstantCondition
      */
     public function update($table, $params, $wherePrams) {
+
+        if (!$this->checkTableExists($table)) {
+            return false;
+        }
+
         $fieldsStr = "";
         $whereStr = "";
 
@@ -139,6 +172,10 @@ class PDODbHelper {
      * @noinspection SqlConstantCondition
      */
     public function delete($table, $whereParams) {
+
+        if (!$this->checkTableExists($table)) {
+            return false;
+        }
 
         $whereStr = "";
 
