@@ -3,6 +3,11 @@
 require_once "config/config.php";
 
 class PDODbHelper {
+    gi
+    private static $HOST = "localhost";
+    private static $DATABASE = "ANDROID_NOTIFY_DB";
+    private static $USER = "mohabouz";
+    private static $PASSWORD = "MhdbzD@1994";
 
     /**
      * @var PDO
@@ -10,10 +15,10 @@ class PDODbHelper {
     private static $link;
 
     public function __construct() {
-        $dsn = sprintf("mysql:dbname=%s;host=%s", DB_NAME, DB_HOST);
+        $dsn = sprintf("mysql:dbname=%s;host=%s", self::$DATABASE, self::$HOST);
 
         try {
-            self::$link = new PDO($dsn, DB_USER, DB_PASS);
+            self::$link = new PDO($dsn, self::$USER, self::$PASSWORD);
         } catch (PDOException $e) {
             die($e->getMessage());
         }
