@@ -30,6 +30,9 @@ class PDODbHelper {
         }
     }
 
+    /**
+     * @return array|false
+     */
     public function listTables() {
         $tableList = array();
         $result = self::$link->query("SHOW TABLES");
@@ -40,6 +43,10 @@ class PDODbHelper {
         return $tableList;
     }
 
+    /**
+     * @param string $tableName
+     * @return bool
+     */
     private function checkTableExists($tableName) {
         return in_array($tableName, $this->tables);
     }
