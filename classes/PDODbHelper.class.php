@@ -15,6 +15,11 @@ class PDODbHelper {
     private static $link;
 
     /**
+     * @var array
+     */
+    private $errors = [];
+
+    /**
      * @var array|false
      */
     private $tables;
@@ -34,9 +39,13 @@ class PDODbHelper {
      * @return array|false
      */
     public function listTables() {
+        $this->errors = [];
         $tableList = array();
         $result = self::$link->query("SHOW TABLES");
-        if (!$result) return false;
+        if (!$result) {
+            $this->errors[] = self::$link->errorInfo()[2];
+            return false;
+        }
         while ($row = $result->fetch(PDO::FETCH_NUM)) {
             $tableList[] = $row[0];
         }
@@ -57,8 +66,10 @@ class PDODbHelper {
      * @return bool
      */
     public function insert($table, $parameters) {
+        $this->errors = [];
 
         if (!$this->checkTableExists($table)) {
+            $this->errors[] = "Table `$table` does not exist.";
             return false;
         }
 
@@ -77,7 +88,14 @@ class PDODbHelper {
         $sql = "INSERT INTO $table ($columns) VALUES ($values)";
         $stmt = self::$link->prepare($sql);
 
-        return $stmt->execute($v);
+        $result = $stmt->execute($v);
+
+        if (!$result) {
+            $this->errors[] = self::$link->errorInfo()[2];
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -90,7 +108,10 @@ class PDODbHelper {
      */
     public function select($table, $columns, $whereParams = []) {
 
+        $this->errors = [];
+
         if (!$this->checkTableExists($table)) {
+            $this->errors[] = "Table `$table` does not exist.";
             return false;
         }
 
@@ -106,7 +127,10 @@ class PDODbHelper {
 
         $result = $stmt->execute();
 
-        if (!$result) return false;
+        if (!$result) {
+            $this->errors[] = self::$link->errorInfo()[2];
+            return false;
+        }
 
         $rows = [];
 
@@ -128,7 +152,10 @@ class PDODbHelper {
      */
     public function update($table, $params, $wherePrams) {
 
+        $this->errors = [];
+
         if (!$this->checkTableExists($table)) {
+            $this->errors[] = "Table `$table` does not exist.";
             return false;
         }
 
@@ -154,7 +181,14 @@ class PDODbHelper {
         $sql = "UPDATE $table SET $fieldsStr WHERE 1=1$whereStr";
 
         $stmt = self::$link->prepare($sql);
-        return $stmt->execute($combined);
+        $result = $stmt->execute($combined);
+
+        if (!$result) {
+            $this->errors[] = self::$link->errorInfo()[2];
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -180,7 +214,10 @@ class PDODbHelper {
      */
     public function delete($table, $whereParams) {
 
+        $this->errors = [];
+
         if (!$this->checkTableExists($table)) {
+            $this->errors[] = "Table `$table` does not exist.";
             return false;
         }
 
@@ -192,8 +229,38 @@ class PDODbHelper {
 
         $sql = "DELETE FROM $table WHERE 1=1$whereStr";
         $stmt = self::$link->prepare($sql);
-        return $stmt->execute($whereStr);
+        $result = $stmt->execute($whereStr);
+
+        if (!$result) {
+            $this->errors[] = self::$link->errorInfo()[2];
+            return false;
+        }
+
+        return true;
     }
+
+    /**
+     * @return false|string
+     */
+    public function getLastInsertedId() {
+        $result = self::$link->lastInsertId();
+
+        if (!$result) {
+            $this->errors[] = self::$link->errorInfo()[2];
+            return false;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array
+     */
+    public function getErrors() {
+        return $this->errors;
+    }
+
+
 
     /**
      *

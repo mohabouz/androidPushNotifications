@@ -6,7 +6,7 @@
 
 class Firebase {
 
-    const FIREBASE_API_KEY = "AAAA4iqmE_Y:APA91bHeiwb416emTo9qctPrAV7TBSsgiGo8zFIttIXBWvQAp-oI1NYgKZtgqjg3hkEGR-sl8laoUB2Trp48IsC5T2VirQMBv6tweJlLqz3147xxrPKu51h4qEYseIOb4pkpYXEGE6xs";
+    const FIREBASE_API_KEY = "";
 
     private $device_token;
     private $device_name;
