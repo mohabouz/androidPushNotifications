@@ -260,8 +260,6 @@ class PDODbHelper {
         return $this->errors;
     }
 
-
-
     /**
      *
      * Merges two associative arrays, keeping the duplicate keys (Adding `_1` at its end)
