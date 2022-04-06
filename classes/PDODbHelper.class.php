@@ -1,6 +1,6 @@
 <?php
 
-class PDODbHelper {
+class PDODbHelper implements DbHelper {
 
     private static $HOST = "localhost";
     private static $DATABASE = "ANDROID_NOTIFY_DB";
