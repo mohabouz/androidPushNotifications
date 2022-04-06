@@ -20,42 +20,32 @@ class Notification {
         $this->image_url = trim($image_url);
     }
 
+    /**
+     * @return false|string
+     */
     public function toJson() {
-        $arr = array(
+        return json_encode([
             "title" => $this->title,
             "message" => $this->message,
             "long_message" => $this->long_message,
             "image_url" => $this->image_url
-        );
-        return json_encode($arr);
+        ]);
     }
 
     /**
-     * @param mysqli $db_link
-     * @return boolean
+     * @return bool
      */
-    public function save_to_database($db_link) {
-        $sql = "INSERT INTO notifications (title, message, long_message, image_url) VALUES (?, ?, ?, ?)";
-        $stmt = $db_link->prepare($sql);
-        $stmt->bind_param(
-            "ssss",
-            $title_param,
-            $message_param,
-            $long_message_param,
-            $image_url_param
-        );
+    public function saveToDatabase() {
+        $table = "notifications";
+        $params = [
+            "title" => $this->title,
+            "message" => $this->message,
+            "long_message" => $this->long_message,
+            "image_url" => $this->image_url
+        ];
 
-        $title_param = $this->title;
-        $message_param = $this->message;
-        $long_message_param = $this->long_message;
-        $image_url_param = $this->image_url;
-
-        if ($stmt->execute()) {
-            return true;
-        }
-
-        return false;
+        $dbHelper = new PDODbHelper();
+        return $dbHelper->insert($table, $params);
     }
-
 
 }

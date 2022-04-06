@@ -4,6 +4,7 @@
  * Author: Mohammed BOUZAID
  */
 
+
 class Firebase {
 
     const FIREBASE_API_KEY = "";
@@ -11,9 +12,11 @@ class Firebase {
     private $device_token;
     private $device_name;
 
+    private static $errorArray = [];
+
     /**
-     * @param $device_token
-     * @param $device_name
+     * @param string $device_token
+     * @param string $device_name
      */
     public function __construct($device_token, $device_name) {
         $this->device_token = trim($device_token);
@@ -21,89 +24,97 @@ class Firebase {
     }
 
     /**
-     * @param mysqli $db_link
-     * @return array|bool
+     * @return boolean
      */
-    public function add_device($db_link) {
+    public function addDevice() {
 
-        $errors_array = array();
+        self::$errorArray = [];
 
         if (empty($this->device_token)) {
-            $errors_array[] = "Device token cannot be empty.";
+            self::$errorArray[] = "Device token cannot be empty.";
+            return false;
         }
 
-        if (count($errors_array) == 0) {
-            $sql = "INSERT INTO subscribed_devices (token, device_name) VALUES (?, ?)";
-            $stmt = $db_link->prepare($sql);
-            $token_param = null;
-            $device_name_param = null;
-            $stmt->bind_param("ss", $token_param, $device_name_param);
-            $token_param = $this->device_token;
-            $device_name_param = $this->device_name;
-            if (!$stmt->execute()) {
-                $errors_array[] = "Device was not added due to an error: " . $db_link->error;
-            }
+        $table = "subscribed_devices";
+        $dbHelper = new PDODbHelper();
+        $params = ["token" => $this->device_token, "device_name" => $this->device_name];
+        $result = $dbHelper->insert($table, $params);
+
+        if (!$result) {
+            self::$errorArray[] += $dbHelper->getErrors();
+            return false;
         }
 
-        if (count($errors_array) > 0) {
-            return $errors_array;
-        } else {
-            return true;
-        }
+        return true;
     }
 
     /**
-     * @param mysqli $db_link
-     * @return array|bool
+     * @return false|array
      */
-    public static function get_devices_tokens($db_link) {
+    public static function getDevicesTokens() {
+        self::$errorArray = [];
+        $table = "subscribed_devices";
+        $dbHelper = new PDODbHelper();
+        $result = $dbHelper->select($table, ["token"]);
+        if (!$result) {
+            self::$errorArray[] += $dbHelper->getErrors();
+            return false;
+        }
+        $devicesTokens = [];
 
-        $sql = "SELECT token FROM subscribed_devices";
-
-        $result = $db_link->query($sql);
-        $temp_array = array();
-
-        if ($result) {
-            while ($row = $result->fetch_assoc()) {
-                $temp_array[] = $row['token'];
-            }
-            $result->close();
-            return $temp_array;
+        foreach ($result as $deviceToken) {
+            $devicesTokens[] = $deviceToken['token'];
         }
 
-        return false;
+        return $devicesTokens;
     }
 
     /**
-     * @param mysqli $db_Link
      * @param Notification $notification
-     * @return bool|string
+     * @return false|string
      */
-    public static function send_notification($db_Link, $notification) {
-
+    public static function sendNotification($notification) {
         $url = 'https://fcm.googleapis.com/fcm/send';
+        $response = ["error" => false];
 
-        $response = array(
-            "error" => false
-        );
+        $devicesTokens = self::getDevicesTokens();
 
-        if (!$devices_tokens = self::get_devices_tokens($db_Link)) {
+        if (!$devicesTokens) {
             $response['error'] = true;
-            $response['message'] = "Empty devices list.";
+            $response['message'] = implode(", ",self::$errorArray);
             echo json_encode($response);
             return false;
         }
 
-        $fields = array(
-            'registration_ids' => $devices_tokens,
+        $fields = [
+            'registration_ids' => $devicesTokens,
             'data' => json_decode($notification->toJson())
-        );
+        ];
 
-        $headers = array(
+        $headers = [
             'Authorization:key = ' . self::FIREBASE_API_KEY,
             'Content-Type: application/json'
-        );
+        ];
 
+        return self::curlRequest($url, $headers, $fields, $response);
+
+    }
+
+    /**
+     * @return array
+     */
+    public function getErrors() {
+        return self::$errorArray;
+    }
+
+    /**
+     * @param string $url
+     * @param array $headers
+     * @param array $fields
+     * @param array $response
+     * @return false|string
+     */
+    private static function curlRequest($url, array $headers, array $fields, array $response) {
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $url);

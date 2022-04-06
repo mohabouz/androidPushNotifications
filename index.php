@@ -20,12 +20,10 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
         !isset($_POST['long_message']) ||
         !isset($_POST['image_url'])) {
 
-        $response = json_encode(
-            array(
-                "error" => TRUE,
-                "message" => "Inputs are not all defined."
-            )
-        );
+        $response = json_encode([
+            "error" => TRUE,
+            "message" => "Inputs are not all defined."
+        ]);
 
     } else {
 
@@ -36,10 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
             $_POST['image_url']
         );
 
-        $response = Firebase::send_notification($link, $notification);
+        $response = Firebase::sendNotification($notification);
 
         if ($response) {
-            $notification->save_to_database($link);
+            $notification->saveToDatabase();
         }
 
     }
@@ -48,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
 
 ?>
 
-<html>
+<html lang="en">
 <head>
     <title>Firebase Push Notification System on Android</title>
     <meta charset="UTF-8">

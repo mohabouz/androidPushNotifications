@@ -1,7 +1,5 @@
 <?php
 
-require_once "config/config.php";
-
 class PDODbHelper {
 
     private static $HOST = "localhost";
@@ -33,31 +31,6 @@ class PDODbHelper {
         } catch (PDOException $e) {
             die($e->getMessage());
         }
-    }
-
-    /**
-     * @return array|false
-     */
-    public function listTables() {
-        $this->errors = [];
-        $tableList = array();
-        $result = self::$link->query("SHOW TABLES");
-        if (!$result) {
-            $this->errors[] = self::$link->errorInfo()[2];
-            return false;
-        }
-        while ($row = $result->fetch(PDO::FETCH_NUM)) {
-            $tableList[] = $row[0];
-        }
-        return $tableList;
-    }
-
-    /**
-     * @param string $tableName
-     * @return bool
-     */
-    private function checkTableExists($tableName) {
-        return in_array($tableName, $this->tables);
     }
 
     /**
@@ -144,13 +117,13 @@ class PDODbHelper {
 
     /**
      * @param string $table
-     * @param array $params
+     * @param array $columns
      * @param array $wherePrams
      * @return boolean
      * @noinspection SqlConstantExpression
      * @noinspection SqlConstantCondition
      */
-    public function update($table, $params, $wherePrams) {
+    public function update($table, $columns, $wherePrams) {
 
         $this->errors = [];
 
@@ -159,26 +132,26 @@ class PDODbHelper {
             return false;
         }
 
-        $fieldsStr = "";
+        $columnsStr = "";
         $whereStr = "";
 
-        foreach ($params as $key => $value) {
-            $fieldsStr .= "$key=:$key, ";
+        foreach ($columns as $key => $value) {
+            $columnsStr .= "$key=:$key, ";
         }
 
         foreach ($wherePrams as $key => $value) {
-            if (isset($params[$key])) {
+            if (isset($columns[$key])) {
                 $whereStr .= " AND $key=:{$key}_1";
                 continue;
             }
             $whereStr .= " AND $key=:$key";
         }
 
-        $fieldsStr = rtrim($fieldsStr, ", ");
+        $columnsStr = rtrim($columnsStr, ", ");
 
-        $combined = self::mergeArrays($params, $wherePrams);
+        $combined = self::mergeArrays($columns, $wherePrams);
 
-        $sql = "UPDATE $table SET $fieldsStr WHERE 1=1$whereStr";
+        $sql = "UPDATE $table SET $columnsStr WHERE 1=1$whereStr";
 
         $stmt = self::$link->prepare($sql);
         $result = $stmt->execute($combined);
@@ -258,6 +231,55 @@ class PDODbHelper {
      */
     public function getErrors() {
         return $this->errors;
+    }
+
+    /**
+     * @return array|false
+     */
+    private function listTables() {
+        $this->errors = [];
+        $tableList = array();
+        $result = self::$link->query("SHOW TABLES");
+        if (!$result) {
+            $this->errors[] = self::$link->errorInfo()[2];
+            return false;
+        }
+        while ($row = $result->fetch(PDO::FETCH_NUM)) {
+            $tableList[] = $row[0];
+        }
+        return $tableList;
+    }
+
+    /**
+     * @param string $tableName
+     * @return bool
+     */
+    private function checkTableExists($tableName) {
+        return in_array($tableName, $this->tables);
+    }
+
+    /**
+     * @param string $table
+     * @return array|false
+     */
+    private function listTableColumns($table) {
+        $sql = "SHOW COLUMNS FROM $table";
+        $stmt = self::$link->query($sql);
+        if (!$stmt) return false;
+        $rows = $stmt->fetchAll();
+        $columns = [];
+        foreach ($rows as $row) $columns[] = $row['Field'];
+        return $columns;
+    }
+
+    /**
+     * @param string $table
+     * @param string $column
+     * @return bool
+     */
+    private function checkColumnsExist($table, $column) {
+        if (!$this->checkTableExists($table)) return false;
+        return in_array($column, $this->listTableColumns($table));
     }
 
     /**
